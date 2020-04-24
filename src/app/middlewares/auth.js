@@ -12,15 +12,16 @@ module.exports = (req, res, next) => {
     if (!parts.lenght === 2)
         return res.status(401).send({ error: "Token Error" });
 
-    const [token, scheme] = parts;
+    const [scheme, token] = parts;
 
     // if (!/ˆBearer$/i.test(scheme))
     //     return res.status(401).send({ error: "Token Malformatted" })
 
-
     jwt.verify(token, authCongif.secret, (err, decoded) => {
-        if (err)
+        if (err) {
+            // console.log(err)
             return res.status(401).send({ error: "Token Invalid" });
+        }
 
         req.userId = decoded.id;
         return next();

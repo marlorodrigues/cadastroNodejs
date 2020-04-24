@@ -1,5 +1,5 @@
 const express = require('express');
-const User = require('../models/index');
+const User = require('../models/user');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -70,14 +70,17 @@ router.post('/forgot_password', async (req, res) => {
                 passwordResetExpires: now
             }
         });
-        mailer.sendMail({
-            to: email,
+
+        await mailer.sendMail({
             from: 'marlorodrigues@outlook.com.br',
-            template: 'src/resourses/mail/password',
-            context: { token }
+            to: email,
+            // template: 'auth/password',
+            // context: { token },
+            subject: "Forgor You Pass to our App?", // Subject line
+            text: "Email de desenvolvimento", // plain text body
+            html: `<p>Esqueceu a senha?! Tudo bem acontece, utilize esse token para logar {${token}}</p>` // html body
         }, (err) => {
             if (err) {
-                console.log(err);
                 return res.status(400).send({ error: "Cannot send forgot password to email" });
             }
 
@@ -87,6 +90,36 @@ router.post('/forgot_password', async (req, res) => {
         console.log(error);
 
         return res.status(400).send({ error: "Erro on forgot password, try again" })
+    }
+});
+
+router.post('/reset_password', async (req, res) => {
+    const { email, token, password } = req.body;
+
+    try {
+
+        const user = await User.findOne({ email })
+            .select("+passwordResetToken passwordResetExpires");
+
+        if (!user)
+            return res.status(400).send({ error: "User Not Found" });
+
+        if (token !== user.passwordResetToken)
+            return res.status(400).send({ error: "Token Invalid" });
+
+        const now = new Date();
+
+        if (now > user.passwordResetExpires)
+            return res.status(400).send({ error: "Token expered, generate a new one" });
+
+        //Atualiza a senha do usuario
+        user.password = password;
+        await user.save();
+
+        res.send();
+
+    } catch (error) {
+        return res.status(400).send({ error: "" });
     }
 });
 
