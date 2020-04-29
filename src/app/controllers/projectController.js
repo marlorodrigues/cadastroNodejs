@@ -54,7 +54,6 @@ router.post('/', async (req, res) => {
 
 router.put('/:projectID', async (req, res) => {
     try {
-        // const { title, description, tasks } = req.body;
         const { title, description, tasks } = req.body;
 
         const project = await Project.findByIdAndUpdate(req.params.projectID, { $set: { title, description } }, { new: true });
